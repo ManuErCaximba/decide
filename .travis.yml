@@ -6,18 +6,21 @@ env:
 before_install: 
 - cd decide
 install: 
-- pip install -r ../requirements.txt
+- pip install -r requirements.txt
+- pip install codacy-coverage
+before_script:
+ - cp local_settings.travis.py local_settings.py
+ - psql -c "create user decide with password 'decide'" 
+ - psql -c "create database decide owner decide"
+ - python manage.py migrate
 script: 
-- python manage.py test
+  - cd decide
+  - coverage run --branch --source=. ./manage.py test --keepdb --with-xunit
+  - coverage xml
+  - python-codacy-coverage -r coverage.xml
 services:
   - postgresql
 addons:
   postgresql: "9.6"
 global:
   - PGPORT=5432
-
-before_script:
- - cp local_settings.travis.py local_settings.py
- - psql -c "create user decide with password 'decide'" 
- - psql -c "create database decide owner decide"
- - python manage.py migrate
